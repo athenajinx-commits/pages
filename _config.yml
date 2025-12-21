@@ -1,0 +1,14 @@
+# Jekyll configuration for GitHub Pages
+title: Documentation Pages
+description: A collection of documentation pages
+theme: minima
+
+# Exclude files from processing
+exclude:
+  - README.md
+  - .gitignore
+
+# Enable plugins
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
