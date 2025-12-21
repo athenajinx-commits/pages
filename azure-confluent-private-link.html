@@ -1,0 +1,1148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Azure Private Network & Confluent Cloud Private Link - Learning Guide</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            padding: 40px 20px;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .content {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            padding: 40px;
+            margin-bottom: 30px;
+        }
+
+        .section {
+            margin-bottom: 50px;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 5px solid #667eea;
+        }
+
+        .section h2 {
+            color: #667eea;
+            font-size: 2em;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section h3 {
+            color: #764ba2;
+            font-size: 1.5em;
+            margin-top: 25px;
+            margin-bottom: 15px;
+        }
+
+        .icon {
+            font-size: 1.2em;
+        }
+
+        .concept-box {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .concept-box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        }
+
+        .concept-box h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .diagram {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+            border: 2px dashed #667eea;
+        }
+
+        .diagram-box {
+            display: inline-block;
+            padding: 15px 25px;
+            margin: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 8px;
+            font-weight: bold;
+            min-width: 150px;
+        }
+
+        .arrow {
+            display: inline-block;
+            font-size: 2em;
+            color: #667eea;
+            margin: 0 10px;
+        }
+
+        .feature-list {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .feature-list li {
+            padding: 10px 0;
+            padding-left: 30px;
+            position: relative;
+        }
+
+        .feature-list li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #667eea;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .interactive-demo {
+            background: #f0f0f0;
+            padding: 25px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            margin: 5px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .button:active {
+            transform: scale(0.98);
+        }
+
+        .info-panel {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #2196f3;
+            display: none;
+        }
+
+        .info-panel.show {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .comparison-table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            text-align: left;
+        }
+
+        .comparison-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .comparison-table tr:hover {
+            background: #f5f5f5;
+        }
+
+        .step-by-step {
+            counter-reset: step-counter;
+        }
+
+        .step {
+            counter-increment: step-counter;
+            background: white;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            position: relative;
+            padding-left: 60px;
+        }
+
+        .step:before {
+            content: counter(step-counter);
+            position: absolute;
+            left: 15px;
+            top: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+
+        .highlight {
+            background: #fff3cd;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .tab {
+            padding: 12px 25px;
+            background: #f0f0f0;
+            border: none;
+            border-radius: 5px 5px 0 0;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        footer {
+            text-align: center;
+            color: white;
+            padding: 20px;
+            opacity: 0.9;
+        }
+
+        /* Quiz Styles */
+        .quiz-question {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            margin: 20px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .quiz-question h4 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .quiz-option {
+            padding: 12px 15px;
+            margin: 8px 0;
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .quiz-option:hover {
+            background: #e3f2fd;
+            border-color: #667eea;
+        }
+
+        .quiz-option.selected {
+            background: #e3f2fd;
+            border-color: #667eea;
+            font-weight: bold;
+        }
+
+        .quiz-option.correct {
+            background: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+
+        .quiz-option.incorrect {
+            background: #f8d7da;
+            border-color: #dc3545;
+            color: #721c24;
+        }
+
+        .explanation {
+            margin-top: 15px;
+            padding: 15px;
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .explanation.show {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        .explanation h5 {
+            color: #856404;
+            margin-bottom: 8px;
+        }
+
+        /* Search Results Styles */
+        .search-result-item {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 3px solid #667eea;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .search-result-item h5 {
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+
+        .search-result-item a {
+            color: #1a73e8;
+            text-decoration: none;
+            font-size: 0.9em;
+        }
+
+        .search-result-item a:hover {
+            text-decoration: underline;
+        }
+
+        .search-result-item p {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.8em;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .diagram-box {
+                display: block;
+                margin: 10px auto;
+            }
+
+            .arrow {
+                display: block;
+                transform: rotate(90deg);
+                margin: 10px auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🌐 Azure Private Network & Confluent Cloud Private Link</h1>
+            <p>Comprehensive Learning Guide for Secure Cloud Networking</p>
+        </header>
+
+        <div class="content">
+            <!-- Overview Section -->
+            <div class="section">
+                <h2><span class="icon">📚</span> Overview</h2>
+                <p>This guide helps you understand how <span class="highlight">Azure Private Network</span> and <span class="highlight">Confluent Cloud Private Link</span> work together to create secure, private connections between your Azure infrastructure and Confluent Cloud services.</p>
+                
+                <div class="tabs">
+                    <button class="tab active" onclick="switchTab('overview')">Overview</button>
+                    <button class="tab" onclick="switchTab('azure')">Azure Private Network</button>
+                    <button class="tab" onclick="switchTab('confluent')">Confluent Private Link</button>
+                    <button class="tab" onclick="switchTab('integration')">Integration</button>
+                </div>
+
+                <div id="overview" class="tab-content active">
+                    <h3>Why Private Connectivity Matters</h3>
+                    <ul class="feature-list">
+                        <li><strong>Security:</strong> Traffic never traverses the public internet</li>
+                        <li><strong>Performance:</strong> Lower latency and higher throughput</li>
+                        <li><strong>Compliance:</strong> Meet regulatory requirements for data privacy</li>
+                        <li><strong>Cost:</strong> Reduced data transfer costs</li>
+                        <li><strong>Reliability:</strong> More stable and predictable network paths</li>
+                    </ul>
+                </div>
+
+                <div id="azure" class="tab-content">
+                    <h3>Azure Private Network Components</h3>
+                    <div class="concept-box">
+                        <h4>Virtual Network (VNet)</h4>
+                        <p>A logically isolated network in Azure where you can launch Azure resources. It provides isolation and segmentation for your workloads.</p>
+                    </div>
+                    <div class="concept-box">
+                        <h4>Private Endpoint</h4>
+                        <p>A network interface that connects you privately and securely to a service powered by Azure Private Link. It uses a private IP address from your VNet.</p>
+                    </div>
+                    <div class="concept-box">
+                        <h4>Private Link Service</h4>
+                        <p>Enables you to expose your own services as Private Link services, making them accessible to other Azure customers privately.</p>
+                    </div>
+                    <div class="concept-box">
+                        <h4>Private DNS Zone</h4>
+                        <p>Manages DNS resolution for private endpoints, ensuring that DNS queries resolve to private IP addresses instead of public ones.</p>
+                    </div>
+                </div>
+
+                <div id="confluent" class="tab-content">
+                    <h3>Confluent Cloud Private Link</h3>
+                    <div class="concept-box">
+                        <h4>What is Private Link?</h4>
+                        <p>Confluent Cloud Private Link allows you to connect to Confluent Cloud clusters over private network connections, eliminating the need for public internet access.</p>
+                    </div>
+                    <div class="concept-box">
+                        <h4>Supported Cloud Providers</h4>
+                        <p>Confluent Cloud Private Link is available for AWS, Azure, and GCP, allowing you to use native private connectivity features of each cloud provider.</p>
+                    </div>
+                    <div class="concept-box">
+                        <h4>Benefits</h4>
+                        <ul class="feature-list">
+                            <li>No public IP addresses required</li>
+                            <li>Traffic stays within the cloud provider's network</li>
+                            <li>Reduced attack surface</li>
+                            <li>Better network performance</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="integration" class="tab-content">
+                    <h3>How They Work Together</h3>
+                    <div class="step-by-step">
+                        <div class="step">
+                            <h4>Setup Azure VNet</h4>
+                            <p>Create a Virtual Network in Azure with appropriate subnets for your resources.</p>
+                        </div>
+                        <div class="step">
+                            <h4>Configure Confluent Cloud Private Link</h4>
+                            <p>Enable Private Link in your Confluent Cloud environment and configure it for Azure.</p>
+                        </div>
+                        <div class="step">
+                            <h4>Create Private Endpoint</h4>
+                            <p>Create a Private Endpoint in your Azure VNet that connects to Confluent Cloud's Private Link service.</p>
+                        </div>
+                        <div class="step">
+                            <h4>Configure DNS</h4>
+                            <p>Set up Private DNS zones to ensure proper name resolution for your Confluent Cloud endpoints.</p>
+                        </div>
+                        <div class="step">
+                            <h4>Test Connectivity</h4>
+                            <p>Verify that your Azure resources can connect to Confluent Cloud over the private network.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Architecture Diagram -->
+            <div class="section">
+                <h2><span class="icon">🏗️</span> Architecture Diagram</h2>
+                <div class="diagram">
+                    <div class="diagram-box">Azure VNet</div>
+                    <span class="arrow">→</span>
+                    <div class="diagram-box">Private Endpoint</div>
+                    <span class="arrow">→</span>
+                    <div class="diagram-box">Azure Private Link</div>
+                    <span class="arrow">→</span>
+                    <div class="diagram-box">Confluent Cloud</div>
+                </div>
+                <p style="text-align: center; margin-top: 20px; color: #666;">
+                    All traffic flows through Azure's private network backbone, never touching the public internet
+                </p>
+            </div>
+
+            <!-- Key Concepts -->
+            <div class="section">
+                <h2><span class="icon">💡</span> Key Concepts</h2>
+                
+                <h3>Azure Private Network</h3>
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Component</th>
+                            <th>Purpose</th>
+                            <th>Key Feature</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>VNet</strong></td>
+                            <td>Isolated network boundary</td>
+                            <td>Subnet segmentation, NSG rules</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Private Endpoint</strong></td>
+                            <td>Private connection to services</td>
+                            <td>Private IP in your VNet</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Private DNS Zone</strong></td>
+                            <td>DNS resolution for private endpoints</td>
+                            <td>Automatic DNS updates</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Private Link</strong></td>
+                            <td>Service provider connection</td>
+                            <td>Bidirectional private connectivity</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Confluent Cloud Private Link</h3>
+                <div class="concept-box">
+                    <h4>Endpoint Types</h4>
+                    <ul class="feature-list">
+                        <li><strong>Bootstrap Endpoint:</strong> Initial connection point for Kafka clients</li>
+                        <li><strong>REST API Endpoint:</strong> For Confluent Cloud REST API access</li>
+                        <li><strong>Schema Registry Endpoint:</strong> For Schema Registry access</li>
+                        <li><strong>KSQL Endpoint:</strong> For KSQL queries and operations</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Interactive Demo -->
+            <div class="section">
+                <h2><span class="icon">🎮</span> Interactive Learning</h2>
+                <div class="interactive-demo">
+                    <h3>Explore Connection Flow</h3>
+                    <p>Click the buttons below to learn about each step in the private connection process:</p>
+                    <button class="button" onclick="showInfo('step1')">Step 1: VNet Setup</button>
+                    <button class="button" onclick="showInfo('step2')">Step 2: Private Endpoint</button>
+                    <button class="button" onclick="showInfo('step3')">Step 3: DNS Configuration</button>
+                    <button class="button" onclick="showInfo('step4')">Step 4: Connection Test</button>
+                    
+                    <div id="step1" class="info-panel">
+                        <h4>VNet Setup</h4>
+                        <p>Create a Virtual Network with:</p>
+                        <ul class="feature-list">
+                            <li>Appropriate address space (e.g., 10.0.0.0/16)</li>
+                            <li>Subnets for different tiers (e.g., 10.0.1.0/24 for application tier)</li>
+                            <li>Network Security Groups (NSG) for traffic control</li>
+                        </ul>
+                    </div>
+                    
+                    <div id="step2" class="info-panel">
+                        <h4>Private Endpoint Creation</h4>
+                        <p>When creating a Private Endpoint:</p>
+                        <ul class="feature-list">
+                            <li>Select the Confluent Cloud Private Link service</li>
+                            <li>Choose the target subnet in your VNet</li>
+                            <li>Azure automatically assigns a private IP address</li>
+                            <li>Connection is established through Azure's backbone</li>
+                        </ul>
+                    </div>
+                    
+                    <div id="step3" class="info-panel">
+                        <h4>DNS Configuration</h4>
+                        <p>Configure Private DNS zones to resolve Confluent endpoints:</p>
+                        <ul class="feature-list">
+                            <li>Create Private DNS zones for each endpoint type</li>
+                            <li>Link the DNS zone to your VNet</li>
+                            <li>DNS queries automatically resolve to private IPs</li>
+                            <li>No changes needed in application code</li>
+                        </ul>
+                    </div>
+                    
+                    <div id="step4" class="info-panel">
+                        <h4>Connection Testing</h4>
+                        <p>Verify your private connection:</p>
+                        <ul class="feature-list">
+                            <li>Test DNS resolution from within VNet</li>
+                            <li>Connect Kafka clients using bootstrap servers</li>
+                            <li>Verify traffic doesn't leave Azure network</li>
+                            <li>Monitor connection metrics in Azure Portal</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Configuration Examples -->
+            <div class="section">
+                <h2><span class="icon">⚙️</span> Configuration Examples</h2>
+                
+                <h3>Azure CLI - Create Private Endpoint</h3>
+                <div class="code-block">
+az network private-endpoint create \
+  --name confluent-pe \
+  --resource-group myResourceGroup \
+  --vnet-name myVNet \
+  --subnet mySubnet \
+  --private-connection-resource-id /subscriptions/.../confluent-service \
+  --connection-name confluent-connection \
+  --group-id kafka
+                </div>
+
+                <h3>Kafka Client Configuration</h3>
+                <div class="code-block">
+bootstrap.servers=pkc-xxxxx.region.azure.confluent.cloud:9092
+security.protocol=SASL_SSL
+sasl.mechanism=PLAIN
+sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule \
+  required username='API_KEY' password='API_SECRET';
+                </div>
+
+                <h3>DNS Resolution</h3>
+                <div class="code-block">
+# Private DNS automatically resolves to:
+pkc-xxxxx.region.azure.confluent.cloud → 10.0.1.5 (private IP)
+                </div>
+            </div>
+
+            <!-- Best Practices -->
+            <div class="section">
+                <h2><span class="icon">✅</span> Best Practices</h2>
+                <div class="concept-box">
+                    <h4>Network Design</h4>
+                    <ul class="feature-list">
+                        <li>Use separate subnets for different application tiers</li>
+                        <li>Implement Network Security Groups (NSG) for traffic filtering</li>
+                        <li>Plan IP address space carefully to avoid conflicts</li>
+                        <li>Use Azure Private DNS zones for automatic DNS management</li>
+                    </ul>
+                </div>
+                
+                <div class="concept-box">
+                    <h4>Security</h4>
+                    <ul class="feature-list">
+                        <li>Enable Private Link on all Confluent Cloud endpoints</li>
+                        <li>Use Azure Private DNS to prevent DNS hijacking</li>
+                        <li>Implement least-privilege access with NSG rules</li>
+                        <li>Monitor network traffic and connection logs</li>
+                    </ul>
+                </div>
+                
+                <div class="concept-box">
+                    <h4>Monitoring</h4>
+                    <ul class="feature-list">
+                        <li>Set up Azure Monitor alerts for Private Endpoint health</li>
+                        <li>Track connection metrics in Confluent Cloud</li>
+                        <li>Monitor DNS resolution and latency</li>
+                        <li>Use Azure Network Watcher for troubleshooting</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Common Scenarios -->
+            <div class="section">
+                <h2><span class="icon">🎯</span> Common Scenarios</h2>
+                
+                <div class="concept-box">
+                    <h4>Scenario 1: Multi-Region Setup</h4>
+                    <p>Connect Azure resources in multiple regions to Confluent Cloud clusters. Each region requires its own Private Endpoint and DNS configuration.</p>
+                </div>
+                
+                <div class="concept-box">
+                    <h4>Scenario 2: Hybrid Cloud</h4>
+                    <p>Use Azure ExpressRoute or VPN Gateway to extend your on-premises network to Azure, then connect to Confluent Cloud via Private Link.</p>
+                </div>
+                
+                <div class="concept-box">
+                    <h4>Scenario 3: High Availability</h4>
+                    <p>Deploy multiple Private Endpoints across different availability zones for redundancy and improved reliability.</p>
+                </div>
+            </div>
+
+            <!-- Quiz Section -->
+            <div class="section" id="quiz-section">
+                <h2><span class="icon">📝</span> Practice Quiz</h2>
+                <div id="quiz-controls" style="text-align: center; margin: 20px 0;">
+                    <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                        <p style="font-size: 1.1em; margin-bottom: 15px;">
+                            <strong>Progress:</strong> <span id="quiz-progress">0/100</span> questions answered
+                        </p>
+                        <button class="button" onclick="startQuiz()" id="start-quiz-btn">Start Quiz (10 Questions)</button>
+                        <button class="button" onclick="resetQuiz()" id="reset-quiz-btn" style="display: none;">Reset Quiz</button>
+                    </div>
+                </div>
+                <div id="quiz-container" style="display: none;">
+                    <div id="quiz-results" style="display: none; background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                        <h3 id="quiz-score"></h3>
+                        <p id="quiz-summary"></p>
+                    </div>
+                    <div id="quiz-questions"></div>
+                    <div style="text-align: center; margin-top: 20px;">
+                        <button class="button" onclick="submitQuiz()" id="submit-quiz-btn" style="display: none;">Submit Answers</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q&A Section with Google Search -->
+            <div class="section" id="qa-section">
+                <h2><span class="icon">❓</span> Ask Questions</h2>
+                <div class="concept-box">
+                    <h4>Have a question? Search for answers!</h4>
+                    <div style="margin: 20px 0;">
+                        <input type="text" id="question-input" placeholder="Enter your question about Azure Private Network or Confluent Cloud Private Link..." 
+                               style="width: 100%; padding: 12px; border: 2px solid #667eea; border-radius: 5px; font-size: 1em; margin-bottom: 10px;">
+                        <button class="button" onclick="searchQuestion()" style="width: 100%;">Search Google</button>
+                    </div>
+                    <div id="search-results" style="margin-top: 20px;"></div>
+                    <div style="margin-top: 15px; padding: 15px; background: #f0f0f0; border-radius: 5px; font-size: 0.9em; color: #666;">
+                        <strong>Note:</strong> This uses Google Custom Search. For best results, you can set up your own Google Custom Search Engine API key. 
+                        Otherwise, results will open in a new window.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>Built for learning Azure Private Network and Confluent Cloud Private Link</p>
+            <p>For official documentation, visit: Azure Docs | Confluent Cloud Docs</p>
+        </footer>
+    </div>
+
+    <script>
+        // Quiz Data - 100 Questions
+        const quizQuestions = [
+            { id: 1, question: "What is the primary purpose of Azure Virtual Network (VNet)?", options: ["To provide public internet access", "To create an isolated network boundary in Azure", "To replace on-premises networks", "To manage DNS records"], correct: 1, explanation: "Azure VNet creates a logically isolated network boundary in Azure where you can launch Azure resources. It provides isolation and segmentation for your workloads." },
+            { id: 2, question: "What does a Private Endpoint use for connectivity?", options: ["Public IP address", "Private IP address from your VNet", "VPN connection", "ExpressRoute"], correct: 1, explanation: "A Private Endpoint uses a private IP address from your VNet, ensuring traffic never leaves Azure's private network." },
+            { id: 3, question: "Which component manages DNS resolution for private endpoints?", options: ["Public DNS", "Azure DNS", "Private DNS Zone", "On-premises DNS"], correct: 2, explanation: "Private DNS Zone manages DNS resolution for private endpoints, ensuring DNS queries resolve to private IP addresses instead of public ones." },
+            { id: 4, question: "What is the main benefit of using Private Link?", options: ["Lower cost", "Traffic never traverses the public internet", "Faster setup", "No configuration needed"], correct: 1, explanation: "The main benefit is that traffic never traverses the public internet, providing enhanced security and compliance." },
+            { id: 5, question: "Which cloud providers support Confluent Cloud Private Link?", options: ["Only Azure", "Azure and AWS", "AWS, Azure, and GCP", "Only AWS"], correct: 2, explanation: "Confluent Cloud Private Link is available for AWS, Azure, and GCP, allowing you to use native private connectivity features of each cloud provider." },
+            { id: 6, question: "What is the bootstrap endpoint used for in Kafka?", options: ["Schema Registry access", "Initial connection point for Kafka clients", "REST API access", "KSQL queries"], correct: 1, explanation: "The bootstrap endpoint is the initial connection point for Kafka clients to discover brokers in the cluster." },
+            { id: 7, question: "How many questions are shown per quiz session?", options: ["5", "10", "20", "All 100"], correct: 1, explanation: "Each quiz session shows 10 questions randomly selected from the pool of unanswered questions." },
+            { id: 8, question: "What happens when you answer a question incorrectly?", options: ["Nothing", "You get an explanation", "You can't continue", "The quiz ends"], correct: 1, explanation: "When you answer incorrectly, an explanation is shown to help you understand why the answer was wrong and learn the correct concept." },
+            { id: 9, question: "What is required to create a Private Endpoint in Azure?", options: ["Public IP", "VNet and subnet", "VPN Gateway", "ExpressRoute"], correct: 1, explanation: "To create a Private Endpoint, you need a VNet with at least one subnet where the endpoint will be placed." },
+            { id: 10, question: "What does NSG stand for in Azure networking?", options: ["Network Security Gateway", "Network Security Group", "Network Service Gateway", "Network System Group"], correct: 1, explanation: "NSG stands for Network Security Group, which provides traffic filtering rules for Azure resources." },
+            { id: 11, question: "Which endpoint type is used for Schema Registry access?", options: ["Bootstrap Endpoint", "REST API Endpoint", "Schema Registry Endpoint", "KSQL Endpoint"], correct: 2, explanation: "The Schema Registry Endpoint is specifically used for accessing Confluent Schema Registry over Private Link." },
+            { id: 12, question: "What is the recommended IP address space for a VNet?", options: ["192.168.0.0/16", "10.0.0.0/16", "172.16.0.0/16", "Any public IP range"], correct: 1, explanation: "10.0.0.0/16 is a common private IP address space used for Azure VNets, though other RFC 1918 ranges work too." },
+            { id: 13, question: "Can you have multiple Private Endpoints for the same service?", options: ["No, only one", "Yes, for high availability", "Only in different regions", "Only with ExpressRoute"], correct: 1, explanation: "Yes, you can deploy multiple Private Endpoints across different availability zones or subnets for redundancy and high availability." },
+            { id: 14, question: "What protocol does Kafka use for communication?", options: ["HTTP", "HTTPS", "TCP", "UDP"], correct: 2, explanation: "Kafka uses TCP protocol for communication between clients and brokers." },
+            { id: 15, question: "What is the purpose of Private DNS Zone linking to VNet?", options: ["To provide public DNS", "To automatically resolve private endpoints", "To replace on-premises DNS", "To block DNS queries"], correct: 1, explanation: "Linking Private DNS Zone to VNet ensures that DNS queries from resources in that VNet automatically resolve to private IP addresses." },
+            { id: 16, question: "Which Azure service extends on-premises network to Azure?", options: ["Private Endpoint", "ExpressRoute or VPN Gateway", "VNet only", "Private DNS"], correct: 1, explanation: "ExpressRoute or VPN Gateway extends your on-premises network to Azure, enabling hybrid cloud connectivity." },
+            { id: 17, question: "What is the maximum number of subnets in a VNet?", options: ["10", "100", "1000", "Unlimited"], correct: 3, explanation: "Azure VNets can have up to 1000 subnets, providing flexibility for network segmentation." },
+            { id: 18, question: "What security mechanism filters traffic in Azure VNets?", options: ["Firewall rules", "NSG (Network Security Groups)", "Private Endpoints", "DNS Zones"], correct: 1, explanation: "Network Security Groups (NSG) provide traffic filtering rules to control inbound and outbound traffic to Azure resources." },
+            { id: 19, question: "What happens to DNS resolution when using Private Link?", options: ["Uses public DNS", "Uses Private DNS Zone", "No DNS needed", "Uses on-premises DNS"], correct: 1, explanation: "Private DNS Zone ensures that DNS queries resolve to private IP addresses, maintaining the private connection." },
+            { id: 20, question: "Which Confluent Cloud endpoint is used for KSQL operations?", options: ["Bootstrap Endpoint", "KSQL Endpoint", "REST API Endpoint", "Schema Registry Endpoint"], correct: 1, explanation: "The KSQL Endpoint is specifically used for KSQL queries and operations over Private Link." },
+            { id: 21, question: "What is the primary security benefit of Private Link?", options: ["Lower cost", "Reduced attack surface", "Faster performance", "Easier setup"], correct: 1, explanation: "Private Link reduces the attack surface by eliminating public internet exposure, making services only accessible through private networks." },
+            { id: 22, question: "Can Private Endpoints be used with services outside Azure?", options: ["No, only Azure services", "Yes, with Private Link Service", "Only with VPN", "Only with ExpressRoute"], correct: 1, explanation: "Yes, Private Endpoints can connect to services outside Azure through Private Link Service, including third-party services like Confluent Cloud." },
+            { id: 23, question: "What is the typical subnet size for application tier?", options: ["/8", "/16", "/24", "/32"], correct: 2, explanation: "/24 subnet (e.g., 10.0.1.0/24) provides 254 usable IP addresses, which is typical for application tiers." },
+            { id: 24, question: "What does 'bootstrap.servers' configure in Kafka?", options: ["Schema Registry URL", "Initial broker connection points", "KSQL endpoint", "REST API endpoint"], correct: 1, explanation: "bootstrap.servers specifies the initial broker connection points that Kafka clients use to discover the cluster." },
+            { id: 25, question: "How does Private Link affect network latency?", options: ["Increases latency", "Decreases latency", "No effect", "Depends on region"], correct: 1, explanation: "Private Link typically decreases latency because traffic stays within the cloud provider's network backbone, avoiding public internet routing." },
+            { id: 26, question: "What is required for Private Link to work with Confluent Cloud?", options: ["Public IP addresses", "Private Link enabled in Confluent Cloud", "VPN connection", "On-premises network"], correct: 1, explanation: "Private Link must be enabled and configured in your Confluent Cloud environment before you can create Private Endpoints in Azure." },
+            { id: 27, question: "What is the purpose of a connection name when creating Private Endpoint?", options: ["DNS name", "Display name for the connection", "Resource name", "Service name"], correct: 1, explanation: "The connection name is a display name that helps identify the Private Link connection in Azure Portal." },
+            { id: 28, question: "Which Azure service monitors network connectivity?", options: ["Azure Monitor", "Network Watcher", "Application Insights", "Log Analytics"], correct: 1, explanation: "Azure Network Watcher provides tools to monitor, diagnose, and troubleshoot network connectivity issues." },
+            { id: 29, question: "What happens if DNS is not configured for Private Endpoint?", options: ["Connection fails", "Uses public IP", "Works automatically", "Uses default DNS"], correct: 1, explanation: "Without proper DNS configuration, clients may resolve to public IPs or fail to connect, breaking the private connection." },
+            { id: 30, question: "Can you use Private Link with multiple regions?", options: ["No", "Yes, each region needs its own endpoint", "Only with ExpressRoute", "Only in same region"], correct: 1, explanation: "Yes, you can use Private Link in multiple regions, but each region requires its own Private Endpoint and DNS configuration." },
+            { id: 31, question: "What is the group-id parameter used for in Private Endpoint?", options: ["Resource group", "Service type identifier", "Network group", "Security group"], correct: 1, explanation: "The group-id parameter identifies the type of service (e.g., 'kafka', 'schema-registry') when creating a Private Endpoint." },
+            { id: 32, question: "What authentication method does Kafka use with Confluent Cloud?", options: ["Basic Auth", "SASL_SSL with PLAIN", "OAuth", "Certificate-based"], correct: 1, explanation: "Confluent Cloud uses SASL_SSL with PLAIN mechanism, requiring API key and secret for authentication." },
+            { id: 33, question: "What is the benefit of using separate subnets for different tiers?", options: ["Cost savings", "Network segmentation and security", "Faster performance", "Easier management"], correct: 1, explanation: "Separate subnets provide network segmentation, allowing you to apply different security policies (NSG rules) to different application tiers." },
+            { id: 34, question: "What does 'pkc-' prefix indicate in Confluent Cloud?", options: ["Private Key Certificate", "Public Kafka Cluster", "Private Kafka Cluster", "Public Key Certificate"], correct: 2, explanation: "The 'pkc-' prefix in Confluent Cloud hostnames indicates a Private Kafka Cluster endpoint." },
+            { id: 35, question: "How do you verify Private Link connectivity?", options: ["Check public IP", "Test DNS resolution and connection", "Check VPN status", "Verify ExpressRoute"], correct: 1, explanation: "You verify Private Link by testing DNS resolution (should return private IP) and successfully connecting to the service from within the VNet." },
+            { id: 36, question: "What is the purpose of availability zones with Private Endpoints?", options: ["Cost reduction", "High availability and redundancy", "Faster setup", "Simpler configuration"], correct: 1, explanation: "Deploying Private Endpoints across availability zones provides high availability and redundancy, ensuring service continuity if one zone fails." },
+            { id: 37, question: "What happens to existing public connections when Private Link is enabled?", options: ["Automatically disabled", "Still work alongside Private Link", "Converted to private", "Blocked"], correct: 1, explanation: "Public connections continue to work alongside Private Link, allowing gradual migration or dual connectivity." },
+            { id: 38, question: "What is the minimum subnet size for a Private Endpoint?", options: ["/28", "/24", "/16", "/8"], correct: 0, explanation: "A /28 subnet provides the minimum required space for a Private Endpoint, though larger subnets are recommended." },
+            { id: 39, question: "What does 'SASL' stand for in Kafka security?", options: ["Simple Authentication Security Layer", "Secure Authentication Service Layer", "Simple Authentication and Security Layer", "Secure Authentication Security Layer"], correct: 2, explanation: "SASL stands for Simple Authentication and Security Layer, a framework for authentication in network protocols." },
+            { id: 40, question: "What is the primary use case for Private Link?", options: ["Cost reduction", "Compliance and security requirements", "Faster internet", "Public access"], correct: 1, explanation: "Private Link is primarily used to meet compliance and security requirements by keeping traffic off the public internet." },
+            { id: 41, question: "Can Private Endpoints be created in peered VNets?", options: ["No", "Yes, in any VNet", "Only in same region", "Only with ExpressRoute"], correct: 1, explanation: "Yes, Private Endpoints can be created in any VNet, including peered VNets, as long as you have proper permissions." },
+            { id: 42, question: "What is the relationship between VNet and subnet?", options: ["Same thing", "Subnet is part of VNet", "VNet is part of subnet", "Independent"], correct: 1, explanation: "A subnet is a subdivision of a VNet's address space, allowing you to segment and organize your network resources." },
+            { id: 43, question: "What port does Kafka typically use?", options: ["80", "443", "9092", "8080"], correct: 2, explanation: "Kafka typically uses port 9092 for client connections, though this can be configured differently." },
+            { id: 44, question: "What is required to connect on-premises to Azure VNet?", options: ["Private Endpoint", "ExpressRoute or VPN Gateway", "Private DNS", "Public IP"], correct: 1, explanation: "ExpressRoute or VPN Gateway is required to extend your on-premises network to Azure VNet for hybrid connectivity." },
+            { id: 45, question: "What does 'least-privilege access' mean in networking?", options: ["Open all ports", "Grant minimum necessary access", "Block all traffic", "Use public access"], correct: 1, explanation: "Least-privilege access means granting only the minimum network access necessary for resources to function, improving security." },
+            { id: 46, question: "What is the purpose of Network Security Group rules?", options: ["DNS resolution", "Traffic filtering", "IP assignment", "Routing"], correct: 1, explanation: "NSG rules filter network traffic by allowing or denying traffic based on source, destination, port, and protocol." },
+            { id: 47, question: "Can you modify a Private Endpoint after creation?", options: ["No, must delete and recreate", "Yes, some properties", "Only DNS", "Only IP address"], correct: 1, explanation: "Some properties of a Private Endpoint can be modified, but core properties like VNet and subnet typically require recreation." },
+            { id: 48, question: "What is the benefit of using Private DNS Zone over manual DNS?", options: ["Cost", "Automatic updates", "Faster resolution", "Public access"], correct: 1, explanation: "Private DNS Zone automatically updates DNS records when Private Endpoints are created or modified, reducing manual configuration." },
+            { id: 49, question: "What does 'hybrid cloud' refer to?", options: ["Multiple Azure regions", "Combination of on-premises and cloud", "Multiple cloud providers", "Public and private networks"], correct: 1, explanation: "Hybrid cloud refers to a computing environment that combines on-premises infrastructure with cloud services." },
+            { id: 50, question: "What is the primary difference between VPN Gateway and ExpressRoute?", options: ["Cost", "VPN uses internet, ExpressRoute uses private connection", "Speed only", "Region availability"], correct: 1, explanation: "VPN Gateway uses the public internet, while ExpressRoute provides a dedicated private connection to Azure, offering better performance and reliability." },
+            { id: 51, question: "What happens when a Private Endpoint is deleted?", options: ["Connection immediately stops", "Graceful disconnection", "Automatic failover", "Nothing"], correct: 0, explanation: "When a Private Endpoint is deleted, the connection immediately stops, and clients will lose connectivity until a new endpoint is created." },
+            { id: 52, question: "What is the purpose of service endpoints in Azure?", options: ["Private Link", "Secure access to Azure services", "Public internet", "DNS resolution"], correct: 1, explanation: "Service endpoints provide secure access to Azure services by extending VNet identity to Azure services, though Private Link is the newer preferred method." },
+            { id: 53, question: "What information is needed to create a Private Endpoint for Confluent?", options: ["Public IP", "Private Link Service resource ID", "API key", "Region only"], correct: 1, explanation: "You need the Private Link Service resource ID from Confluent Cloud to create the Private Endpoint connection." },
+            { id: 54, question: "What is the maximum number of Private Endpoints per VNet?", options: ["10", "100", "1000", "Unlimited"], correct: 2, explanation: "Azure supports up to 1000 Private Endpoints per VNet, providing scalability for multiple service connections." },
+            { id: 55, question: "What does 'end-to-end encryption' mean in Private Link context?", options: ["Only client encryption", "Encryption from client to service", "Only service encryption", "No encryption"], correct: 1, explanation: "End-to-end encryption means data is encrypted from the client all the way to the service, maintaining security throughout the private connection." },
+            { id: 56, question: "What is the purpose of connection approval in Private Link?", options: ["Automatic", "Service provider must approve", "Client approval", "No approval needed"], correct: 1, explanation: "The service provider (like Confluent) must approve the Private Endpoint connection request before it becomes active." },
+            { id: 57, question: "What happens if IP address space overlaps between VNets?", options: ["Automatic resolution", "Connection issues", "Works fine", "Auto-merge"], correct: 1, explanation: "Overlapping IP address spaces cause routing conflicts and connection issues, so VNets should use non-overlapping address ranges." },
+            { id: 58, question: "What is the benefit of using availability zones?", options: ["Cost", "Fault tolerance", "Speed", "Simplicity"], correct: 1, explanation: "Availability zones provide fault tolerance by distributing resources across physically separate datacenters within a region." },
+            { id: 59, question: "What does 'peering' mean in Azure networking?", options: ["Public connection", "Connecting two VNets", "Internet gateway", "DNS service"], correct: 1, explanation: "VNet peering connects two Azure VNets, allowing resources in different VNets to communicate privately." },
+            { id: 60, question: "What is required for VNet peering to work?", options: ["Same region", "Non-overlapping IP spaces", "Public IPs", "ExpressRoute"], correct: 1, explanation: "VNets being peered must have non-overlapping IP address spaces to avoid routing conflicts." },
+            { id: 61, question: "What is the purpose of a route table in Azure?", options: ["DNS", "Control traffic routing", "IP assignment", "Security"], correct: 1, explanation: "Route tables control how traffic is routed within and between subnets, allowing custom routing logic." },
+            { id: 62, question: "What does 'DNAT' stand for in networking?", options: ["Domain Name Translation", "Destination Network Address Translation", "Dynamic Network Address Translation", "Domain Network Address Translation"], correct: 1, explanation: "DNAT stands for Destination Network Address Translation, which translates destination IP addresses in network traffic." },
+            { id: 63, question: "What is the primary use of Azure Firewall with Private Link?", options: ["Required for Private Link", "Additional security layer", "DNS resolution", "IP assignment"], correct: 1, explanation: "Azure Firewall can provide an additional security layer for outbound traffic, though it's not required for Private Link to work." },
+            { id: 64, question: "What happens to DNS when Private Endpoint is in pending approval?", options: ["Resolves immediately", "Doesn't resolve", "Uses public IP", "Random IP"], correct: 1, explanation: "DNS won't properly resolve until the Private Endpoint connection is approved and active." },
+            { id: 65, question: "What is the difference between Private Endpoint and Service Endpoint?", options: ["Same thing", "Private Endpoint uses private IP, Service Endpoint uses public", "Only naming", "Different regions"], correct: 1, explanation: "Private Endpoint assigns a private IP from your VNet, while Service Endpoint extends VNet identity but still uses public service IPs." },
+            { id: 66, question: "What is required for multi-region Private Link setup?", options: ["Single endpoint", "Endpoint per region", "VPN between regions", "ExpressRoute"], correct: 1, explanation: "Each region requires its own Private Endpoint because Private Link is region-specific." },
+            { id: 67, question: "What does 'bootstrap' mean in Kafka context?", options: ["Startup process", "Initial connection discovery", "Shutdown process", "Data loading"], correct: 1, explanation: "Bootstrap refers to the initial process where Kafka clients connect to bootstrap servers to discover the full cluster topology." },
+            { id: 68, question: "What is the purpose of Schema Registry in Confluent?", options: ["Data storage", "Schema management and evolution", "Network routing", "Authentication"], correct: 1, explanation: "Schema Registry manages and evolves schemas for Kafka messages, ensuring data compatibility and evolution." },
+            { id: 69, question: "What happens if you don't configure Private DNS for Private Endpoint?", options: ["Works automatically", "Clients may use public IPs", "Connection blocked", "Uses default DNS"], correct: 1, explanation: "Without Private DNS, clients may resolve to public IP addresses, defeating the purpose of Private Link." },
+            { id: 70, question: "What is the benefit of using Private Link over VPN?", options: ["No VPN needed", "Simpler setup", "Better performance", "All of the above"], correct: 3, explanation: "Private Link eliminates the need for VPN, provides simpler setup, and typically offers better performance by using Azure's backbone." },
+            { id: 71, question: "What does 'SLA' mean in the context of Private Link?", options: ["Service Level Agreement", "Secure Link Access", "Simple Link Authentication", "Service Link Address"], correct: 0, explanation: "SLA stands for Service Level Agreement, which defines the expected uptime and performance guarantees for the service." },
+            { id: 72, question: "What is the purpose of connection monitoring in Azure?", options: ["Cost tracking", "Performance and health monitoring", "User tracking", "Billing"], correct: 1, explanation: "Connection monitoring tracks performance metrics and health status of Private Endpoint connections." },
+            { id: 73, question: "Can you use Private Link with Azure Functions?", options: ["No", "Yes, if in VNet", "Only with App Service", "Only with VMs"], correct: 1, explanation: "Yes, Azure Functions can use Private Link when deployed in a VNet-integrated configuration." },
+            { id: 74, question: "What is the purpose of a NAT Gateway with Private Link?", options: ["Required for Private Link", "Outbound internet access", "DNS resolution", "Inbound access"], correct: 1, explanation: "NAT Gateway provides outbound internet access for resources in private subnets, though it's not required for Private Link itself." },
+            { id: 75, question: "What does 'idempotent' mean in Kafka producers?", options: ["Duplicate prevention", "Exactly-once semantics", "At-least-once delivery", "All of the above"], correct: 3, explanation: "Idempotent producers prevent duplicates and enable exactly-once semantics, ensuring messages are delivered exactly once." },
+            { id: 76, question: "What is the maximum message size in Kafka?", options: ["1MB", "Configurable, typically 1MB default", "10MB", "Unlimited"], correct: 1, explanation: "Kafka message size is configurable, with a typical default of 1MB, though it can be increased based on needs." },
+            { id: 77, question: "What is the purpose of consumer groups in Kafka?", options: ["Authentication", "Load balancing and parallelism", "Security", "Networking"], correct: 1, explanation: "Consumer groups enable load balancing and parallelism by distributing message processing across multiple consumers." },
+            { id: 78, question: "What does 'retention' mean in Kafka?", options: ["Data storage duration", "Connection timeout", "Authentication period", "Network timeout"], correct: 0, explanation: "Retention refers to how long Kafka stores messages in topics before they are deleted or compacted." },
+            { id: 79, question: "What is the benefit of using compression in Kafka?", options: ["Security", "Reduced storage and bandwidth", "Faster processing", "Better reliability"], correct: 1, explanation: "Compression reduces storage requirements and network bandwidth usage when transmitting Kafka messages." },
+            { id: 80, question: "What does 'replication factor' mean in Kafka?", options: ["Number of consumers", "Number of broker copies", "Number of producers", "Network redundancy"], correct: 1, explanation: "Replication factor specifies how many copies of each partition are maintained across brokers for fault tolerance." },
+            { id: 81, question: "What is the purpose of partitions in Kafka topics?", options: ["Security", "Parallelism and scalability", "Authentication", "Networking"], correct: 1, explanation: "Partitions enable parallelism and scalability by allowing multiple consumers to process different parts of a topic simultaneously." },
+            { id: 82, question: "What happens if a Kafka broker fails?", options: ["All data lost", "Service stops", "Automatic failover if replicated", "Manual intervention required"], correct: 2, explanation: "If a broker fails and topics have replication factor > 1, Kafka automatically fails over to replica brokers." },
+            { id: 83, question: "What is the purpose of offsets in Kafka?", options: ["Network routing", "Message position tracking", "Authentication", "Compression"], correct: 1, explanation: "Offsets track the position of each consumer in a partition, enabling consumers to resume from where they left off." },
+            { id: 84, question: "What does 'at-least-once' delivery mean?", options: ["Messages delivered once", "Messages may be duplicated", "Messages may be lost", "No delivery guarantee"], correct: 1, explanation: "At-least-once delivery ensures messages are delivered at least once, but duplicates may occur." },
+            { id: 85, question: "What is the purpose of KSQL in Confluent?", options: ["Network management", "Stream processing with SQL", "Authentication", "DNS resolution"], correct: 1, explanation: "KSQL enables stream processing using SQL-like queries on Kafka streams, making it easier to process real-time data." },
+            { id: 86, question: "What is the benefit of using Confluent Cloud over self-managed Kafka?", options: ["Cost only", "Managed service, automatic updates, scaling", "Speed only", "Region availability"], correct: 1, explanation: "Confluent Cloud provides a fully managed service with automatic updates, scaling, and operational management." },
+            { id: 87, question: "What is required to connect to Confluent Cloud?", options: ["Public IP only", "API key and secret", "VPN only", "On-premises network"], correct: 1, explanation: "To connect to Confluent Cloud, you need API key and secret for authentication, along with proper network connectivity." },
+            { id: 88, question: "What is the purpose of Confluent Control Center?", options: ["Network monitoring", "Kafka cluster management and monitoring", "DNS management", "Security only"], correct: 1, explanation: "Confluent Control Center provides a web UI for managing and monitoring Kafka clusters, topics, and consumers." },
+            { id: 89, question: "What does 'exactly-once' semantics mean?", options: ["Messages delivered once, no duplicates", "Messages may be lost", "Messages may be duplicated", "No guarantee"], correct: 0, explanation: "Exactly-once semantics ensures each message is delivered exactly once, with no duplicates or losses." },
+            { id: 90, question: "What is the purpose of Kafka Connect?", options: ["Network connectivity", "Integrating Kafka with external systems", "Authentication", "DNS resolution"], correct: 1, explanation: "Kafka Connect enables integration between Kafka and external systems like databases, file systems, and cloud services." },
+            { id: 91, question: "What is required for Private Link approval in Confluent Cloud?", options: ["Automatic", "Manual approval in Confluent UI", "Azure approval only", "No approval"], correct: 1, explanation: "Private Link connections require manual approval in the Confluent Cloud UI before they become active." },
+            { id: 92, question: "What is the benefit of using Private Link for compliance?", options: ["Cost", "Data never leaves private network", "Speed", "Simplicity"], correct: 1, explanation: "Private Link helps meet compliance requirements by ensuring data never traverses the public internet." },
+            { id: 93, question: "What is the purpose of Azure Monitor with Private Link?", options: ["Cost tracking", "Performance metrics and alerts", "User management", "DNS only"], correct: 1, explanation: "Azure Monitor tracks performance metrics and can send alerts for Private Endpoint health and connectivity issues." },
+            { id: 94, question: "What happens if Private DNS Zone is deleted?", options: ["Nothing", "DNS resolution fails", "Uses public DNS", "Automatic recovery"], correct: 1, explanation: "If Private DNS Zone is deleted, DNS resolution for private endpoints will fail, breaking connectivity." },
+            { id: 95, question: "What is the purpose of tags in Azure resources?", options: ["Networking", "Organization and cost management", "Security", "DNS"], correct: 1, explanation: "Tags help organize resources, track costs, and apply policies across Azure resources." },
+            { id: 96, question: "What is required for cross-region Private Link?", options: ["Single endpoint", "Global endpoint", "Endpoint per region", "VPN between regions"], correct: 2, explanation: "Cross-region Private Link requires a separate Private Endpoint in each region where you need connectivity." },
+            { id: 97, question: "What is the benefit of using Azure Resource Manager?", options: ["Networking only", "Unified management and deployment", "Cost only", "Security only"], correct: 1, explanation: "Azure Resource Manager provides unified management, deployment, and organization of Azure resources." },
+            { id: 98, question: "What is the purpose of Azure Policy with Private Link?", options: ["Enforcement of compliance rules", "Networking only", "Cost management", "DNS only"], correct: 0, explanation: "Azure Policy can enforce compliance rules, such as requiring Private Link for certain services." },
+            { id: 99, question: "What is required to troubleshoot Private Link connectivity?", options: ["Public access", "Network Watcher and DNS testing", "VPN only", "ExpressRoute"], correct: 1, explanation: "Troubleshooting Private Link requires tools like Network Watcher and testing DNS resolution and connectivity." },
+            { id: 100, question: "What is the primary advantage of Private Link over public endpoints?", options: ["Lower cost only", "Enhanced security and compliance", "Faster setup", "No configuration"], correct: 1, explanation: "The primary advantage is enhanced security and compliance by keeping traffic off the public internet." }
+        ];
+
+        // Quiz state
+        let answeredQuestions = new Set();
+        let currentQuizQuestions = [];
+        let userAnswers = {};
+        let quizStarted = false;
+
+        function switchTab(tabName) {
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(content => content.classList.remove('active'));
+            
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function showInfo(stepId) {
+            const panels = document.querySelectorAll('.info-panel');
+            panels.forEach(panel => panel.classList.remove('show'));
+            
+            const panel = document.getElementById(stepId);
+            if (panel) {
+                panel.classList.add('show');
+            }
+        }
+
+        function startQuiz() {
+            const unanswered = quizQuestions.filter(q => !answeredQuestions.has(q.id));
+            
+            if (unanswered.length === 0) {
+                alert('You have answered all questions! Click "Reset Quiz" to start over.');
+                return;
+            }
+
+            if (unanswered.length < 10) {
+                currentQuizQuestions = [...unanswered];
+            } else {
+                // Randomly select 10 questions
+                const shuffled = [...unanswered].sort(() => 0.5 - Math.random());
+                currentQuizQuestions = shuffled.slice(0, 10);
+            }
+
+            quizStarted = true;
+            userAnswers = {};
+            
+            document.getElementById('quiz-container').style.display = 'block';
+            document.getElementById('start-quiz-btn').style.display = 'none';
+            document.getElementById('reset-quiz-btn').style.display = 'inline-block';
+            document.getElementById('quiz-results').style.display = 'none';
+            
+            renderQuiz();
+            updateProgress();
+        }
+
+        function renderQuiz() {
+            const container = document.getElementById('quiz-questions');
+            container.innerHTML = '';
+
+            currentQuizQuestions.forEach((question, index) => {
+                const questionDiv = document.createElement('div');
+                questionDiv.className = 'quiz-question';
+                questionDiv.id = `question-${question.id}`;
+                
+                questionDiv.innerHTML = `
+                    <h4>Question ${index + 1}: ${question.question}</h4>
+                    <div class="quiz-options">
+                        ${question.options.map((option, optIndex) => `
+                            <div class="quiz-option" onclick="selectAnswer(${question.id}, ${optIndex})" id="opt-${question.id}-${optIndex}">
+                                ${String.fromCharCode(65 + optIndex)}. ${option}
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="explanation" id="explanation-${question.id}">
+                        <h5>Explanation:</h5>
+                        <p>${question.explanation}</p>
+                    </div>
+                `;
+                
+                container.appendChild(questionDiv);
+            });
+
+            document.getElementById('submit-quiz-btn').style.display = 'block';
+        }
+
+        function selectAnswer(questionId, optionIndex) {
+            userAnswers[questionId] = optionIndex;
+            
+            // Update visual selection
+            const question = currentQuizQuestions.find(q => q.id === questionId);
+            const options = document.querySelectorAll(`#question-${questionId} .quiz-option`);
+            
+            options.forEach(opt => opt.classList.remove('selected'));
+            document.getElementById(`opt-${questionId}-${optionIndex}`).classList.add('selected');
+        }
+
+        function submitQuiz() {
+            let correct = 0;
+            let total = currentQuizQuestions.length;
+
+            currentQuizQuestions.forEach(question => {
+                const userAnswer = userAnswers[question.id];
+                const isCorrect = userAnswer === question.correct;
+                
+                if (isCorrect) {
+                    correct++;
+                }
+
+                // Mark answers
+                const options = document.querySelectorAll(`#question-${question.id} .quiz-option`);
+                options.forEach((opt, index) => {
+                    opt.style.pointerEvents = 'none';
+                    if (index === question.correct) {
+                        opt.classList.add('correct');
+                    } else if (index === userAnswer && !isCorrect) {
+                        opt.classList.add('incorrect');
+                    }
+                });
+
+                // Show explanation for wrong answers
+                if (!isCorrect || userAnswer === undefined) {
+                    document.getElementById(`explanation-${question.id}`).classList.add('show');
+                }
+
+                // Mark as answered
+                answeredQuestions.add(question.id);
+            });
+
+            // Show results
+            const score = Math.round((correct / total) * 100);
+            document.getElementById('quiz-score').textContent = `Score: ${correct}/${total} (${score}%)`;
+            document.getElementById('quiz-summary').textContent = 
+                `You got ${correct} out of ${total} questions correct. ${total - correct > 0 ? 'Review the explanations below to learn more!' : 'Excellent work!'}`;
+            
+            document.getElementById('quiz-results').style.display = 'block';
+            document.getElementById('submit-quiz-btn').style.display = 'none';
+            
+            updateProgress();
+            
+            // Scroll to results
+            document.getElementById('quiz-results').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function resetQuiz() {
+            if (confirm('Are you sure you want to reset the quiz? This will clear all your progress.')) {
+                answeredQuestions.clear();
+                currentQuizQuestions = [];
+                userAnswers = {};
+                quizStarted = false;
+                
+                document.getElementById('quiz-container').style.display = 'none';
+                document.getElementById('start-quiz-btn').style.display = 'inline-block';
+                document.getElementById('reset-quiz-btn').style.display = 'none';
+                document.getElementById('quiz-results').style.display = 'none';
+                
+                updateProgress();
+            }
+        }
+
+        function updateProgress() {
+            const total = quizQuestions.length;
+            const answered = answeredQuestions.size;
+            document.getElementById('quiz-progress').textContent = `${answered}/${total}`;
+        }
+
+        // Google Search Functionality
+        async function searchQuestion() {
+            const question = document.getElementById('question-input').value.trim();
+            if (!question) {
+                alert('Please enter a question');
+                return;
+            }
+
+            const resultsDiv = document.getElementById('search-results');
+            resultsDiv.innerHTML = '<div class="loading">Searching...</div>';
+
+            // Enhanced search query
+            const searchQuery = `${question} Azure Private Network Confluent Cloud Private Link`;
+            
+            // Try to use Google Custom Search API if available
+            // For production, you would need to set up Google Custom Search Engine
+            // For now, we'll create a search interface that opens Google and shows formatted results
+            
+            try {
+                // Create a search URL
+                const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`;
+                
+                // Display search results interface
+                resultsDiv.innerHTML = `
+                    <div class="search-result-item">
+                        <h5>🔍 Search Results for: "${question}"</h5>
+                        <p>Click the link below to view Google search results:</p>
+                        <a href="${googleSearchUrl}" target="_blank" style="display: inline-block; margin-top: 10px; padding: 10px 20px; background: #667eea; color: white; border-radius: 5px; text-decoration: none;">
+                            View Google Search Results →
+                        </a>
+                    </div>
+                    <div class="search-result-item" style="margin-top: 15px;">
+                        <h5>💡 Quick Tips:</h5>
+                        <ul style="margin-left: 20px; color: #666;">
+                            <li>Search for "Azure Private Endpoint" for Azure-specific documentation</li>
+                            <li>Search for "Confluent Cloud Private Link" for Confluent-specific guides</li>
+                            <li>Check official documentation: docs.microsoft.com and docs.confluent.io</li>
+                            <li>Look for Azure Private Link service documentation</li>
+                        </ul>
+                    </div>
+                `;
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="search-result-item" style="border-left-color: #dc3545;">
+                        <h5>Error</h5>
+                        <p>Unable to perform search. Please try again or visit <a href="https://www.google.com/search?q=${encodeURIComponent(searchQuery)}" target="_blank">Google Search</a> directly.</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Allow Enter key to trigger search
+        document.addEventListener('DOMContentLoaded', function() {
+            const questionInput = document.getElementById('question-input');
+            if (questionInput) {
+                questionInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        searchQuestion();
+                    }
+                });
+            }
+            updateProgress();
+        });
+
+        // Add smooth scrolling
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
