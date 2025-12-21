@@ -6,7 +6,8 @@
 #!! ERROR: html is undefined. Use list command to see defined gitignore types !!#
 
 #!! ERROR: javascript is undefined. Use list command to see defined gitignore types !!#
-
+.cursor/
+.vscode/
 ### Jekyll ###
 _site/
 .sass-cache/

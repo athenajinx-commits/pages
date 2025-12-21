@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Azure Private Network & Confluent Cloud Private Link - Learning Guide</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            padding: 40px 20px;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .content {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            padding: 40px;
+            margin-bottom: 30px;
+        }
+
+        .section {
+            margin-bottom: 50px;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 5px solid #667eea;
+        }
+
+        .section h2 {
+            color: #667eea;
+            font-size: 2em;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section h3 {
+            color: #764ba2;
+            font-size: 1.5em;
+            margin-top: 25px;
+            margin-bottom: 15px;
+        }
+
+        .icon {
+            font-size: 1.2em;
+        }
+
+        .concept-box {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .concept-box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        }
+
+        .concept-box h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .diagram {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+            border: 2px dashed #667eea;
+        }
+
+        .diagram-box {
+            display: inline-block;
+            padding: 15px 25px;
+            margin: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 8px;
+            font-weight: bold;
+            min-width: 150px;
+        }
+
+        .arrow {
+            display: inline-block;
+            font-size: 2em;
+            color: #667eea;
+            margin: 0 10px;
+        }
+
+        .feature-list {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .feature-list li {
+            padding: 10px 0;
+            padding-left: 30px;
+            position: relative;
+        }
+
+        .feature-list li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #667eea;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .interactive-demo {
+            background: #f0f0f0;
+            padding: 25px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            margin: 5px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .button:active {
+            transform: scale(0.98);
+        }
+
+        .info-panel {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #2196f3;
+            display: none;
+        }
+
+        .info-panel.show {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .comparison-table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            text-align: left;
+        }
+
+        .comparison-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .comparison-table tr:hover {
+            background: #f5f5f5;
+        }
+
+        .step-by-step {
+            counter-reset: step-counter;
+        }
+
+        .step {
+            counter-increment: step-counter;
+            background: white;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            position: relative;
+            padding-left: 60px;
+        }
+
+        .step:before {
+            content: counter(step-counter);
+            position: absolute;
+            left: 15px;
+            top: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+
+        .highlight {
+            background: #fff3cd;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .tab {
+            padding: 12px 25px;
+            background: #f0f0f0;
+            border: none;
+            border-radius: 5px 5px 0 0;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .search-result-item {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 3px solid #667eea;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .search-result-item h5 {
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+
+        .search-result-item a {
+            color: #1a73e8;
+            text-decoration: none;
+            font-size: 0.9em;
+        }
+
+        .search-result-item a:hover {
+            text-decoration: underline;
+        }
+
+        .search-result-item p {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+
+        .back-link:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        footer {
+            text-align: center;
+            color: white;
+            padding: 20px;
+            opacity: 0.9;
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.8em;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .diagram-box {
+                display: block;
+                margin: 10px auto;
+            }
+
+            .arrow {
+                display: block;
+                transform: rotate(90deg);
+                margin: 10px auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <a href="index.html" class="back-link">← Back to Index</a>
+            <h1>🌐 Azure Private Network & Confluent Cloud Private Link</h1>
+            <p>Comprehensive Learning Guide for Secure Cloud Networking</p>
+        </header>
+
+        <div class="content">
+            <!-- Overview Section -->
+            <div class="section">
+                <h2><span class="icon">📚</span> Overview</h2>
+                <p>This guide helps you understand how <span class="highlight">Azure Private Network</span> and <span class="highlight">Confluent Cloud Private Link</span> work together to create secure, private connections between your Azure infrastructure and Confluent Cloud services.</p>
+                
+                <div class="tabs">
+                    <button class="tab active" onclick="switchTab('overview')">Overview</button>
+                    <button class="tab" onclick="switchTab('azure')">Azure Private Network</button>
+                    <button class="tab" onclick="switchTab('confluent')">Confluent Private Link</button>
+                    <button class="tab" onclick="switchTab('integration')">Integration</button>
+                </div>
+
+                <div id="overview" class="tab-content active">
+                    <h3>Why Private Connectivity Matters</h3>
+                    <ul class="feature-list">
+                        <li><strong>Security:</strong> Traffic never traverses the public internet</li>
+                        <li><strong>Performance:</strong> Lower latency and higher throughput</li>
+                        <li><strong>Compliance:</strong> Meet regulatory requirements for data privacy</li>
+                        <li><strong>Cost:</strong> Reduced data transfer costs</li>
+                        <li><strong>Reliability:</strong> More stable and predictable network paths</li>
+                    </ul>
+                </div>
+
+                <div id="azure" class="tab-content">
+                    <h3>Azure Private Network Components</h3>
+                    <div class="concept-box">
+                        <h4>Virtual Network (VNet)</h4>
+                        <p>A logically isolated network in Azure where you can launch Azure resources. It provides isolation and segmentation for your workloads.</p>
+                    </div>
+                    <div class="concept-box">
+                        <h4>Private Endpoint</h4>
+                        <p>A network interface that connects you privately and securely to a service powered by Azure Private Link. It uses a private IP address from your VNet.</p>
+                    </div>
+                    <div class="concept-box">
+                        <h4>Private Link Service</h4>
+                        <p>Enables you to expose your own services as Private Link services, making them accessible to other Azure customers privately.</p>
+                    </div>
+                    <div class="concept-box">
+                        <h4>Private DNS Zone</h4>
+                        <p>Manages DNS resolution for private endpoints, ensuring that DNS queries resolve to private IP addresses instead of public ones.</p>
+                    </div>
+                </div>
+
+                <div id="confluent" class="tab-content">
+                    <h3>Confluent Cloud Private Link</h3>
+                    <div class="concept-box">
+                        <h4>What is Private Link?</h4>
+                        <p>Confluent Cloud Private Link allows you to connect to Confluent Cloud clusters over private network connections, eliminating the need for public internet access.</p>
+                    </div>
+                    <div class="concept-box">
+                        <h4>Supported Cloud Providers</h4>
+                        <p>Confluent Cloud Private Link is available for AWS, Azure, and GCP, allowing you to use native private connectivity features of each cloud provider.</p>
+                    </div>
+                    <div class="concept-box">
+                        <h4>Benefits</h4>
+                        <ul class="feature-list">
+                            <li>No public IP addresses required</li>
+                            <li>Traffic stays within the cloud provider's network</li>
+                            <li>Reduced attack surface</li>
+                            <li>Better network performance</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="integration" class="tab-content">
+                    <h3>How They Work Together</h3>
+                    <div class="step-by-step">
+                        <div class="step">
+                            <h4>Setup Azure VNet</h4>
+                            <p>Create a Virtual Network in Azure with appropriate subnets for your resources.</p>
+                        </div>
+                        <div class="step">
+                            <h4>Configure Confluent Cloud Private Link</h4>
+                            <p>Enable Private Link in your Confluent Cloud environment and configure it for Azure.</p>
+                        </div>
+                        <div class="step">
+                            <h4>Create Private Endpoint</h4>
+                            <p>Create a Private Endpoint in your Azure VNet that connects to Confluent Cloud's Private Link service.</p>
+                        </div>
+                        <div class="step">
+                            <h4>Configure DNS</h4>
+                            <p>Set up Private DNS zones to ensure proper name resolution for your Confluent Cloud endpoints.</p>
+                        </div>
+                        <div class="step">
+                            <h4>Test Connectivity</h4>
+                            <p>Verify that your Azure resources can connect to Confluent Cloud over the private network.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Architecture Diagram -->
+            <div class="section">
+                <h2><span class="icon">🏗️</span> Architecture Diagram</h2>
+                <div class="diagram">
+                    <div class="diagram-box">Azure VNet</div>
+                    <span class="arrow">→</span>
+                    <div class="diagram-box">Private Endpoint</div>
+                    <span class="arrow">→</span>
+                    <div class="diagram-box">Azure Private Link</div>
+                    <span class="arrow">→</span>
+                    <div class="diagram-box">Confluent Cloud</div>
+                </div>
+                <p style="text-align: center; margin-top: 20px; color: #666;">
+                    All traffic flows through Azure's private network backbone, never touching the public internet
+                </p>
+            </div>
+
+            <!-- Key Concepts -->
+            <div class="section">
+                <h2><span class="icon">💡</span> Key Concepts</h2>
+                
+                <h3>Azure Private Network</h3>
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Component</th>
+                            <th>Purpose</th>
+                            <th>Key Feature</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>VNet</strong></td>
+                            <td>Isolated network boundary</td>
+                            <td>Subnet segmentation, NSG rules</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Private Endpoint</strong></td>
+                            <td>Private connection to services</td>
+                            <td>Private IP in your VNet</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Private DNS Zone</strong></td>
+                            <td>DNS resolution for private endpoints</td>
+                            <td>Automatic DNS updates</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Private Link</strong></td>
+                            <td>Service provider connection</td>
+                            <td>Bidirectional private connectivity</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Confluent Cloud Private Link</h3>
+                <div class="concept-box">
+                    <h4>Endpoint Types</h4>
+                    <ul class="feature-list">
+                        <li><strong>Bootstrap Endpoint:</strong> Initial connection point for Kafka clients</li>
+                        <li><strong>REST API Endpoint:</strong> For Confluent Cloud REST API access</li>
+                        <li><strong>Schema Registry Endpoint:</strong> For Schema Registry access</li>
+                        <li><strong>KSQL Endpoint:</strong> For KSQL queries and operations</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Interactive Demo -->
+            <div class="section">
+                <h2><span class="icon">🎮</span> Interactive Learning</h2>
+                <div class="interactive-demo">
+                    <h3>Explore Connection Flow</h3>
+                    <p>Click the buttons below to learn about each step in the private connection process:</p>
+                    <button class="button" onclick="showInfo('step1')">Step 1: VNet Setup</button>
+                    <button class="button" onclick="showInfo('step2')">Step 2: Private Endpoint</button>
+                    <button class="button" onclick="showInfo('step3')">Step 3: DNS Configuration</button>
+                    <button class="button" onclick="showInfo('step4')">Step 4: Connection Test</button>
+                    
+                    <div id="step1" class="info-panel">
+                        <h4>VNet Setup</h4>
+                        <p>Create a Virtual Network with:</p>
+                        <ul class="feature-list">
+                            <li>Appropriate address space (e.g., 10.0.0.0/16)</li>
+                            <li>Subnets for different tiers (e.g., 10.0.1.0/24 for application tier)</li>
+                            <li>Network Security Groups (NSG) for traffic control</li>
+                        </ul>
+                    </div>
+                    
+                    <div id="step2" class="info-panel">
+                        <h4>Private Endpoint Creation</h4>
+                        <p>When creating a Private Endpoint:</p>
+                        <ul class="feature-list">
+                            <li>Select the Confluent Cloud Private Link service</li>
+                            <li>Choose the target subnet in your VNet</li>
+                            <li>Azure automatically assigns a private IP address</li>
+                            <li>Connection is established through Azure's backbone</li>
+                        </ul>
+                    </div>
+                    
+                    <div id="step3" class="info-panel">
+                        <h4>DNS Configuration</h4>
+                        <p>Configure Private DNS zones to resolve Confluent endpoints:</p>
+                        <ul class="feature-list">
+                            <li>Create Private DNS zones for each endpoint type</li>
+                            <li>Link the DNS zone to your VNet</li>
+                            <li>DNS queries automatically resolve to private IPs</li>
+                            <li>No changes needed in application code</li>
+                        </ul>
+                    </div>
+                    
+                    <div id="step4" class="info-panel">
+                        <h4>Connection Testing</h4>
+                        <p>Verify your private connection:</p>
+                        <ul class="feature-list">
+                            <li>Test DNS resolution from within VNet</li>
+                            <li>Connect Kafka clients using bootstrap servers</li>
+                            <li>Verify traffic doesn't leave Azure network</li>
+                            <li>Monitor connection metrics in Azure Portal</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Configuration Examples -->
+            <div class="section">
+                <h2><span class="icon">⚙️</span> Configuration Examples</h2>
+                
+                <h3>Azure CLI - Create Private Endpoint</h3>
+                <div class="code-block">
+az network private-endpoint create \
+  --name confluent-pe \
+  --resource-group myResourceGroup \
+  --vnet-name myVNet \
+  --subnet mySubnet \
+  --private-connection-resource-id /subscriptions/.../confluent-service \
+  --connection-name confluent-connection \
+  --group-id kafka
+                </div>
+
+                <h3>Kafka Client Configuration</h3>
+                <div class="code-block">
+bootstrap.servers=pkc-xxxxx.region.azure.confluent.cloud:9092
+security.protocol=SASL_SSL
+sasl.mechanism=PLAIN
+sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule \
+  required username='API_KEY' password='API_SECRET';
+                </div>
+
+                <h3>DNS Resolution</h3>
+                <div class="code-block">
+# Private DNS automatically resolves to:
+pkc-xxxxx.region.azure.confluent.cloud → 10.0.1.5 (private IP)
+                </div>
+            </div>
+
+            <!-- Best Practices -->
+            <div class="section">
+                <h2><span class="icon">✅</span> Best Practices</h2>
+                <div class="concept-box">
+                    <h4>Network Design</h4>
+                    <ul class="feature-list">
+                        <li>Use separate subnets for different application tiers</li>
+                        <li>Implement Network Security Groups (NSG) for traffic filtering</li>
+                        <li>Plan IP address space carefully to avoid conflicts</li>
+                        <li>Use Azure Private DNS zones for automatic DNS management</li>
+                    </ul>
+                </div>
+                
+                <div class="concept-box">
+                    <h4>Security</h4>
+                    <ul class="feature-list">
+                        <li>Enable Private Link on all Confluent Cloud endpoints</li>
+                        <li>Use Azure Private DNS to prevent DNS hijacking</li>
+                        <li>Implement least-privilege access with NSG rules</li>
+                        <li>Monitor network traffic and connection logs</li>
+                    </ul>
+                </div>
+                
+                <div class="concept-box">
+                    <h4>Monitoring</h4>
+                    <ul class="feature-list">
+                        <li>Set up Azure Monitor alerts for Private Endpoint health</li>
+                        <li>Track connection metrics in Confluent Cloud</li>
+                        <li>Monitor DNS resolution and latency</li>
+                        <li>Use Azure Network Watcher for troubleshooting</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Common Scenarios -->
+            <div class="section">
+                <h2><span class="icon">🎯</span> Common Scenarios</h2>
+                
+                <div class="concept-box">
+                    <h4>Scenario 1: Multi-Region Setup</h4>
+                    <p>Connect Azure resources in multiple regions to Confluent Cloud clusters. Each region requires its own Private Endpoint and DNS configuration.</p>
+                </div>
+                
+                <div class="concept-box">
+                    <h4>Scenario 2: Hybrid Cloud</h4>
+                    <p>Use Azure ExpressRoute or VPN Gateway to extend your on-premises network to Azure, then connect to Confluent Cloud via Private Link.</p>
+                </div>
+                
+                <div class="concept-box">
+                    <h4>Scenario 3: High Availability</h4>
+                    <p>Deploy multiple Private Endpoints across different availability zones for redundancy and improved reliability.</p>
+                </div>
+            </div>
+
+            <!-- Q&A Section with Google Search -->
+            <div class="section" id="qa-section">
+                <h2><span class="icon">❓</span> Ask Questions</h2>
+                <div class="concept-box">
+                    <h4>Have a question? Search for answers!</h4>
+                    <div style="margin: 20px 0;">
+                        <input type="text" id="question-input" placeholder="Enter your question about Azure Private Network or Confluent Cloud Private Link..." 
+                               style="width: 100%; padding: 12px; border: 2px solid #667eea; border-radius: 5px; font-size: 1em; margin-bottom: 10px;">
+                        <button class="button" onclick="searchQuestion()" style="width: 100%;">Search Google</button>
+                    </div>
+                    <div id="search-results" style="margin-top: 20px;"></div>
+                    <div style="margin-top: 15px; padding: 15px; background: #f0f0f0; border-radius: 5px; font-size: 0.9em; color: #666;">
+                        <strong>Note:</strong> This uses Google Custom Search. For best results, you can set up your own Google Custom Search Engine API key. 
+                        Otherwise, results will open in a new window.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>Built for learning Azure Private Network and Confluent Cloud Private Link</p>
+            <p>For official documentation, visit: Azure Docs | Confluent Cloud Docs</p>
+            <p style="margin-top: 10px;"><a href="azure-confluent-private-link-quiz.html" style="color: white; text-decoration: underline;">Take the Practice Quiz →</a></p>
+        </footer>
+    </div>
+
+    <script>
+        function switchTab(tabName) {
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(content => content.classList.remove('active'));
+            
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function showInfo(stepId) {
+            const panels = document.querySelectorAll('.info-panel');
+            panels.forEach(panel => panel.classList.remove('show'));
+            
+            const panel = document.getElementById(stepId);
+            if (panel) {
+                panel.classList.add('show');
+            }
+        }
+
+        // Google Search Functionality
+        async function searchQuestion() {
+            const question = document.getElementById('question-input').value.trim();
+            if (!question) {
+                alert('Please enter a question');
+                return;
+            }
+
+            const resultsDiv = document.getElementById('search-results');
+            resultsDiv.innerHTML = '<div class="loading">Searching...</div>';
+
+            // Enhanced search query
+            const searchQuery = `${question} Azure Private Network Confluent Cloud Private Link`;
+            
+            try {
+                // Create a search URL
+                const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`;
+                
+                // Display search results interface
+                resultsDiv.innerHTML = `
+                    <div class="search-result-item">
+                        <h5>🔍 Search Results for: "${question}"</h5>
+                        <p>Click the link below to view Google search results:</p>
+                        <a href="${googleSearchUrl}" target="_blank" style="display: inline-block; margin-top: 10px; padding: 10px 20px; background: #667eea; color: white; border-radius: 5px; text-decoration: none;">
+                            View Google Search Results →
+                        </a>
+                    </div>
+                    <div class="search-result-item" style="margin-top: 15px;">
+                        <h5>💡 Quick Tips:</h5>
+                        <ul style="margin-left: 20px; color: #666;">
+                            <li>Search for "Azure Private Endpoint" for Azure-specific documentation</li>
+                            <li>Search for "Confluent Cloud Private Link" for Confluent-specific guides</li>
+                            <li>Check official documentation: docs.microsoft.com and docs.confluent.io</li>
+                            <li>Look for Azure Private Link service documentation</li>
+                        </ul>
+                    </div>
+                `;
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="search-result-item" style="border-left-color: #dc3545;">
+                        <h5>Error</h5>
+                        <p>Unable to perform search. Please try again or visit <a href="https://www.google.com/search?q=${encodeURIComponent(searchQuery)}" target="_blank">Google Search</a> directly.</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Allow Enter key to trigger search
+        document.addEventListener('DOMContentLoaded', function() {
+            const questionInput = document.getElementById('question-input');
+            if (questionInput) {
+                questionInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        searchQuestion();
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
